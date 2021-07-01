@@ -1,34 +1,81 @@
+/**
+ * 
+ * @author Rekha patil
+ * @author Sanobar Mujawar
+ * 
+ * @since 01.07.21
+ * 
+ * Purpose: To calculate cab invoice for different user
+ */
+
 package com.InvoiceService;
 
+import exception.InvoiceGeneratorException;
+import utilily.InvoiceSummery;
+
 public class InvoiceGenerator {
-	
-	private static final int COST_PER_MINUTE = 1;
-    private static final double MINIMUM_COSt_PER_KILOMETER = 10;
-    private static final double MINIMUM_FARE = 5.0;
 
-    public double calculateFare(double distance, int time) {
-        double totalFare = distance * MINIMUM_COSt_PER_KILOMETER + time * COST_PER_MINUTE;
-        return Math.max(totalFare, MINIMUM_FARE);
-    }
+	private static int COST_PER_MINUTE;
+	private static double MINIMUM_COST_PER_KILOMETER;
+	private static double MINIMUM_FARE;
 
-    public double calculateTotalFare(Ride[] rides) {
-        double totalFare = 0;
-        for (Ride ride : rides) {
-            totalFare += this.calculateFare(ride.getDistance(), ride.getTime());
-        }
-        return totalFare;
-    }
+	RideRepository rideRepository;
 
-    public int getNumberOfRides(Ride[] rides) {
-        return rides.length;
-    }
+	public InvoiceGenerator() {
+		rideRepository = new RideRepository();
+	}
 
-    public double calculateAverageRideCost(Ride[] rides) {
-        double totalFare = 0;
-        for (Ride ride : rides) {
-            totalFare += calculateFare(ride.getDistance(), ride.getTime());
-        }
+	public InvoiceSummery calculateFare(Ride... rides) {
+		double totalFare = 0;
+		for (Ride ride : rides) {
+			
+			checkRideType(ride.rideType);
+			totalFare += ride.getDistance() * MINIMUM_COST_PER_KILOMETER + ride.getTime() * COST_PER_MINUTE;
+		}
+		if (totalFare < MINIMUM_FARE)
+			return new InvoiceSummery(rides.length, MINIMUM_FARE);
+		return new InvoiceSummery(rides.length, totalFare);
+	}
 
-        return totalFare / rides.length;
-    }
+	/**
+	 * Method in which given cost for premium and normal ride type 
+	 * @param rideType
+	 */
+	private void checkRideType(String rideType) {
+		
+		switch (rideType) {
+		case "PREMIUM":
+			MINIMUM_COST_PER_KILOMETER = 15;
+			COST_PER_MINUTE = 2;
+			MINIMUM_FARE = 20;
+			break;
+		case "NORMAL":
+			MINIMUM_COST_PER_KILOMETER = 10;
+			COST_PER_MINUTE = 1;
+			MINIMUM_FARE = 5;
+			break;
+		}
+	}
+
+	public InvoiceSummery invoiceForUser(String userId) {
+		return calculateFare(rideRepository.getRidesForUser(userId));
+	}
+
+	public int getNumberOfRides(Ride[] rides) {
+		return rides.length;
+	}
+
+	/**
+	 * Method to add ride to RideRepository
+	 * 
+	 * @param userId
+	 * @param rides
+	 * @throws InvoiceGeneratorException
+	 */
+	public void addRideToRepository(String[] userId, Ride[][] rides) throws InvoiceGeneratorException {
+		for (int i = 0; i < userId.length; i++) {
+			rideRepository.addRideForUser(userId[i], rides[i]);
+		}
+	}
+
 }

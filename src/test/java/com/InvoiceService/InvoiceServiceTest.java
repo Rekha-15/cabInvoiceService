@@ -3,70 +3,94 @@ package com.InvoiceService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import exception.InvoiceGeneratorException;
+import utilily.InvoiceSummery;
 
 public class InvoiceServiceTest {
-	
+
 	InvoiceGenerator invoiceGenerator;
 
-    @Before
-    public void setUp()
-    {
-        invoiceGenerator = new InvoiceGenerator();
-    }
+	@Before
+	public void setUp() {
+		invoiceGenerator = new InvoiceGenerator();
+	}
 
+	@Test
+	public void whenGivenDistanceAndTimeShouldReturnTotalFare() {
+		double distance = 3.0;
+		int time = 7;
+		InvoiceSummery invoiceSummary = invoiceGenerator.calculateFare(new Ride(distance, time, "NORMAL"));
+		InvoiceSummery expectedInvoiceSummary = new InvoiceSummery(1, 37);
+		Assert.assertEquals(expectedInvoiceSummary, invoiceSummary);
+	}
+
+	@Test
+	public void whenGivenLessDistanceOrTimeShouldReturnMinimumFare() {
+		double distance = 0.01;
+		int time = 1;
+		InvoiceSummery invoiceSummary = invoiceGenerator.calculateFare(new Ride(distance, time, "NORMAL"));
+		InvoiceSummery expectedInvoiceSummary = new InvoiceSummery(1, 5);
+		Assert.assertEquals(expectedInvoiceSummary, invoiceSummary);
+	}
+
+	@Test
+	public void whenGivenMultipleRidesShouldReturnInvoiceSummary() {
+		Ride[] rides = { new Ride(3.0, 7, "NORMAL"), new Ride(0.01, 1, "NORMAL") };
+		InvoiceSummery invoiceSummary = invoiceGenerator.calculateFare(rides);
+		InvoiceSummery expectedInvoiceSummary = new InvoiceSummery(rides.length, 38.1);
+		Assert.assertEquals(expectedInvoiceSummary, invoiceSummary);
+	}
 	
 
-    @Test
-    public void whenGivenDistanceAndTimeShouldReturnTotalFare() {
-        InvoiceGenerator cabInvoiceGenerator = new InvoiceGenerator();
-        double distance = 2.0;
-        int time = 5;
-        double totalFare = cabInvoiceGenerator.calculateFare(distance,time);
-        System.out.println("Total Fare = " +totalFare);
-        Assert.assertEquals(25, totalFare,0.0);
+	@Test
+	public void givenUserId_ShouldReturnInvoiceSummary() throws InvoiceGeneratorException {
+		String[] userId = { "user1", "user2", "user3" };
+		Ride[][] rides = { { new Ride(5.0, 12, "NORMAL"), new Ride(2.5, 6, "NORMAL") },
+				{ new Ride(3.0, 5, "NORMAL"), new Ride(0.01, 1, "NORMAL") },
+				{ new Ride(10.0, 15, "NORMAL"), new Ride(2, 30, "NORMAL") } };
+		invoiceGenerator.addRideToRepository(userId, rides);
+		InvoiceSummery summary = invoiceGenerator.invoiceForUser(userId[2]);
+		InvoiceSummery expectedInvoiceSummary = new InvoiceSummery(rides[2].length, 165.0);
+		Assert.assertEquals(expectedInvoiceSummary, summary);
+	}
+	
+	
+	@Test
+    public void givenSameUserId_ShouldThrowException()
+    {
+        try
+        {
+            String[] userId = {"user1", "user1", "user3"};
+            Ride[][] rides =
+                    {{new Ride(5.0, 12, "NORMAL"), new Ride(2.5, 6, "NORMAL")},
+                    {new Ride(3.0, 5, "NORMAL"), new Ride(0.01, 1, "NORMAL")},
+                    {new Ride(10.0, 15, "NORMAL"), new Ride(2, 30, "NORMAL")}};
+            ExpectedException exceptionRule = ExpectedException.none();
+            exceptionRule.expect(InvoiceGeneratorException.class);
+            invoiceGenerator.addRideToRepository(userId, rides);
+        }
+        catch (InvoiceGeneratorException e)
+        {
+            e.printStackTrace();
+        }
     }
-
-    @Test
-    public void whenGivenLessDistanceOrTimeShouldReturnMinimumFare() {
-        InvoiceGenerator cabInvoiceGenerator = new InvoiceGenerator();
-        double distance = 0.1;
-        int time = 1;
-        double fare = cabInvoiceGenerator.calculateFare(distance, time);
-        System.out.println("Minimum Fare = " +fare);
-        Assert.assertEquals(5, fare,0.0);
+	
+	
+	@Test
+    public void givenPremiumAndNormalRideForUserId_ShouldReturnInvoiceSummary() throws InvoiceGeneratorException
+    {
+            String[] userId = {"user1", "user2", "user3"};
+            Ride[][] rides =
+                    {{new Ride(5.0, 12, "PREMIUM"), new Ride(2.5, 6, "NORMAL")},
+                    {new Ride(3.0, 5, "PREMIUM"), new Ride(0.01, 1, "PREMIUM")},
+                    {new Ride(10.0, 15, "NORMAL"), new Ride(2, 30, "PREMIUM")}};
+            invoiceGenerator.addRideToRepository(userId, rides);
+            InvoiceSummery summary = invoiceGenerator.invoiceForUser(userId[2]);
+            InvoiceSummery expectedInvoiceSummary = new InvoiceSummery(rides[2].length, 205.0);
+            Assert.assertEquals(expectedInvoiceSummary, summary);
     }
-
-    @Test
-    public void whenGivenMultipleRidesShouldReturnInvoiceSummary() {
-        InvoiceGenerator cabInvoiceGenerator = new InvoiceGenerator();
-        Ride[] rides = { new Ride(2.0, 5),
-                         new Ride(0.1, 1)};
-        double totalFare = cabInvoiceGenerator.calculateTotalFare(rides);
-        System.out.println("Total Fare = "+totalFare);
-        Assert.assertEquals(30, totalFare,0.0);
-    }
-
-
-    @Test
-    public void givenMultipleRides_shouldReturnSizeAndAverageFare(){
-        InvoiceGenerator cabInvoiceGenerator = new InvoiceGenerator();
-
-        Ride[] rides = { new Ride(20.0,4),
-                         new Ride(45.0,1),
-                         new Ride(75.0,1),
-                         new Ride(45.5,1)};
-
-        double totalFare = cabInvoiceGenerator.calculateTotalFare(rides);
-        int numberOfRides = cabInvoiceGenerator.getNumberOfRides(rides);
-        double averageTotalFare = cabInvoiceGenerator.calculateAverageRideCost(rides);
-
-        System.out.println("Total Fare = " +totalFare);
-        System.out.println("Number of ride = " +numberOfRides);
-        System.out.println("Average Total Fare " +averageTotalFare);
-
-        Assert.assertEquals(1862,totalFare,0.0);
-        Assert.assertEquals(4,numberOfRides);
-        Assert.assertEquals(465,averageTotalFare,0.5);
-    }
+	
+    
 }

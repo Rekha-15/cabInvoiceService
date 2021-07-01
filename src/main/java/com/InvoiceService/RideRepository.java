@@ -3,7 +3,6 @@
  * 
  */
 
-
 package com.InvoiceService;
 
 import java.util.HashMap;
@@ -16,6 +15,7 @@ public class RideRepository {
 
 	/**
 	 * Adds user ride by its ID in hashmap
+	 * 
 	 * @param userId
 	 * @param rides
 	 * @throws InvoiceGeneratorException
@@ -27,15 +27,15 @@ public class RideRepository {
 		else
 			userRides.put(userId, rides);
 	}
-	
+
 	/**
 	 * This method get rides of user by ID
+	 * 
 	 * @param userId
 	 * @return
 	 */
-	public Ride[] getRidesForUser(String userId)
-    {
-        return userRides.get(userId);
-    }
+	public Ride[] getRidesForUser(String userId) {
+		return userRides.get(userId);
+	}
 
 }
