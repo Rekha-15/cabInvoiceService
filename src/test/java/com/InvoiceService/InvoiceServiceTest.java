@@ -1,10 +1,21 @@
 package com.InvoiceService;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 
 public class InvoiceServiceTest {
+	
+	InvoiceGenerator invoiceGenerator;
+
+    @Before
+    public void setUp()
+    {
+        invoiceGenerator = new InvoiceGenerator();
+    }
+
+	
 
     @Test
     public void whenGivenDistanceAndTimeShouldReturnTotalFare() {
